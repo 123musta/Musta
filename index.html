@@ -3,195 +3,199 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Noor Celestial</title>
+    <title>Noor Celestial Master</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Amiri:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
     <style>
-        :root {
-            --emerald: #10b981;
-            --gold: #fbbf24;
-            --cosmic-dark: #020617;
-        }
+        :root { --emerald: #10b981; --gold: #fbbf24; --cosmic: #020617; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--cosmic); color: #f8fafc; margin: 0; height: 100vh; overflow: hidden; }
         
-        body { 
-            font-family: 'Plus Jakarta Sans', sans-serif; 
-            background-color: var(--cosmic-dark); 
-            color: #f8fafc; 
-            margin: 0;
-            height: 100vh;
-            overflow: hidden; 
-            -webkit-font-smoothing: antialiased;
+        #bg-canvas { position: fixed; inset: 0; z-index: 1; pointer-events: none; opacity: 0.5; }
+        
+        .aurora-glass { 
+            background: rgba(15, 23, 42, 0.4); 
+            backdrop-filter: blur(25px); 
+            -webkit-backdrop-filter: blur(25px); 
+            border: 1px solid rgba(255, 255, 255, 0.05); 
         }
 
-        /* 3D Background Canvas */
-        #bg-canvas { position: fixed; inset: 0; z-index: 0; pointer-events: none; opacity: 0.6; }
+        .view-port { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; padding-bottom: 150px; z-index: 10; position: relative; }
+        .tab-section { display: none; animation: fadeIn 0.4s ease-out; }
+        .tab-section.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* Aurora Glassmorphism */
-        .aurora-glass {
-            background: rgba(15, 23, 42, 0.4);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            box-shadow: 0 10px 40px -10px rgba(0,0,0,0.5);
-        }
-
-        .main-container { flex: 1; overflow-y: auto; scroll-behavior: smooth; -webkit-overflow-scrolling: touch; padding-bottom: 120px; z-index: 10; position: relative; }
-        .main-container::-webkit-scrollbar { display: none; }
-
-        .tab-view { display: none; animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
-        .tab-view.active { display: block; }
-
-        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-
-        .arabic { font-family: 'Amiri', serif; font-size: 2.4rem; color: var(--gold); text-shadow: 0 0 20px rgba(251, 191, 36, 0.3); }
-
-        /* Floating Nav Button */
-        .nav-btn { position: relative; transition: all 0.3s ease; }
-        .nav-btn.active-tab { color: var(--emerald); }
-        .nav-btn.active-tab::after {
-            content: ''; position: absolute; bottom: -8px; left: 50%; transform: translateX(-50%);
-            width: 4px; height: 4px; background: var(--emerald); border-radius: 50%;
-            box-shadow: 0 0 8px var(--emerald);
-        }
-
-        /* Tasbih Ripple Effect */
-        .tasbih-core {
-            width: 280px; height: 280px; border-radius: 50%;
-            background: radial-gradient(circle, rgba(16, 185, 129, 0.1) 0%, transparent 70%);
+        .arabic { font-family: 'Amiri', serif; font-size: 2.2rem; color: var(--gold); text-shadow: 0 0 15px rgba(251, 191, 36, 0.2); }
+        
+        /* Fixed Tasbih Button */
+        .tasbih-trigger {
+            width: 260px; height: 260px; border-radius: 50%;
+            background: radial-gradient(circle, rgba(16, 185, 129, 0.15) 0%, transparent 70%);
+            border: 2px solid rgba(16, 185, 129, 0.2);
             display: flex; align-items: center; justify-content: center;
-            transition: transform 0.1s ease;
+            cursor: pointer; position: relative; z-index: 50;
+            transition: transform 0.1s active; touch-action: manipulation;
         }
-        .tasbih-core:active { transform: scale(0.95); }
+        .tasbih-trigger:active { transform: scale(0.92); border-color: var(--emerald); }
 
-        .habit-pill { transition: all 0.3s ease; border: 1px solid rgba(255,255,255,0.05); }
-        .habit-pill.checked { background: rgba(16, 185, 129, 0.15); border-color: var(--emerald); }
+        .nav-btn.active { color: var(--emerald); }
+        .nav-btn.active::after { content: ''; position: absolute; bottom: -10px; left: 50%; transform: translateX(-50%); width: 5px; height: 5px; background: var(--emerald); border-radius: 50%; box-shadow: 0 0 10px var(--emerald); }
+
+        .name-card { min-width: 120px; height: 140px; }
+        .habit-card.active { border-color: var(--emerald); background: rgba(16, 185, 129, 0.1); }
     </style>
 </head>
 <body class="flex items-center justify-center">
 
     <canvas id="bg-canvas"></canvas>
 
-    <!-- App Wrapper -->
-    <div class="w-full max-w-md h-screen flex flex-col relative overflow-hidden bg-transparent">
+    <div class="w-full max-w-md h-screen flex flex-col relative overflow-hidden">
         
-        <!-- Top Visual Header -->
-        <header class="shrink-0 p-8 flex items-center justify-between z-50">
-            <div class="flex items-center gap-4">
-                <div class="w-10 h-10 rounded-full border border-emerald-500/30 flex items-center justify-center bg-emerald-500/10">
-                    <span class="text-xl">🕌</span>
+        <!-- Premium Header -->
+        <header class="pt-10 px-6 pb-4 flex items-center justify-between z-[100] bg-gradient-to-b from-slate-950 to-transparent">
+            <div>
+                <h1 class="text-xl font-black tracking-tighter">NOOR <span class="text-emerald-400">MASTER</span></h1>
+                <div class="flex items-center gap-2 mt-1">
+                    <div class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
+                    <p id="soul-rank" class="text-[8px] font-black uppercase tracking-[0.2em] text-emerald-500/80">Soul Level: 1 (Seeker)</p>
                 </div>
-                <h1 class="text-xl font-extrabold tracking-tighter">NOOR <span class="text-emerald-400">CELESTIAL</span></h1>
             </div>
-            <button onclick="switchTab('journal')" class="p-2 aurora-glass rounded-xl text-emerald-400">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+            <button onclick="switchTab('tools')" class="w-10 h-10 aurora-glass rounded-2xl flex items-center justify-center text-emerald-400">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path></svg>
             </button>
         </header>
 
-        <!-- Dynamic Content Area -->
-        <main class="main-container px-6" id="app-view">
+        <main class="view-port px-6" id="view-port">
             
             <!-- HOME VIEW -->
-            <section id="home" class="tab-view active space-y-8">
-                <div class="aurora-glass p-8 rounded-[2.5rem] relative overflow-hidden">
-                    <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-500/0 via-emerald-500/40 to-emerald-500/0"></div>
-                    <p class="arabic text-center mb-6">اللَّهُ نُورُ السَّمَاوَاتِ وَالْأَرْضِ</p>
-                    <p class="text-center text-slate-300 text-sm italic font-medium">"Allah is the Light of the heavens and the earth."</p>
-                    <div class="mt-8 flex justify-center">
-                        <span class="text-[10px] uppercase tracking-[0.3em] text-emerald-500 font-bold px-4 py-1 rounded-full bg-emerald-500/10">Surah An-Nur 24:35</span>
+            <section id="home" class="tab-section active space-y-8">
+                <!-- Verse Card -->
+                <div class="aurora-glass p-8 rounded-[2.5rem] relative overflow-hidden group">
+                    <div class="absolute -right-4 -top-4 w-24 h-24 bg-emerald-500/10 blur-2xl rounded-full"></div>
+                    <p class="arabic text-right mb-6">فَاذْكُرُونِي أَذْكُرْكُمْ</p>
+                    <p class="text-slate-200 text-sm font-medium italic">"So remember Me; I will remember you."</p>
+                    <div class="mt-6 flex justify-between items-center">
+                        <span class="text-[9px] font-bold text-emerald-500/60 uppercase tracking-widest">Al-Baqarah 152</span>
+                        <div class="w-20 h-1 bg-slate-800 rounded-full overflow-hidden">
+                            <div id="soul-progress" class="h-full bg-emerald-500 w-1/3"></div>
+                        </div>
                     </div>
                 </div>
 
-                <!-- Sunnah Habit Tracker -->
+                <!-- 99 Names Discovery -->
                 <div class="space-y-4">
-                    <h3 class="text-xs font-black uppercase tracking-widest text-slate-500 px-2">Sunnah Habits</h3>
-                    <div class="grid grid-cols-2 gap-3">
-                        <div onclick="toggleHabit(this)" class="habit-pill aurora-glass p-5 rounded-3xl flex flex-col gap-3 cursor-pointer">
-                            <span class="text-2xl">💧</span>
-                            <span class="text-xs font-bold">Wudu before sleep</span>
+                    <h3 class="text-[10px] font-black uppercase tracking-widest text-slate-500 px-2">Divine Names</h3>
+                    <div class="flex overflow-x-auto gap-4 no-scrollbar pb-2">
+                        <div class="name-card aurora-glass rounded-3xl p-4 flex flex-col items-center justify-center text-center shrink-0">
+                            <span class="text-xl font-bold text-gold">Ar-Rahman</span>
+                            <span class="text-[10px] text-slate-400 mt-2">The Merciful</span>
                         </div>
-                        <div onclick="toggleHabit(this)" class="habit-pill aurora-glass p-5 rounded-3xl flex flex-col gap-3 cursor-pointer">
-                            <span class="text-2xl">☕</span>
-                            <span class="text-xs font-bold">Right-hand drinking</span>
+                        <div class="name-card aurora-glass rounded-3xl p-4 flex flex-col items-center justify-center text-center shrink-0">
+                            <span class="text-xl font-bold text-gold">Ar-Rahim</span>
+                            <span class="text-[10px] text-slate-400 mt-2">The Compassionate</span>
                         </div>
-                        <div onclick="toggleHabit(this)" class="habit-pill aurora-glass p-5 rounded-3xl flex flex-col gap-3 cursor-pointer">
-                            <span class="text-2xl">📖</span>
-                            <span class="text-xs font-bold">Surah Mulk Nightly</span>
+                        <div class="name-card aurora-glass rounded-3xl p-4 flex flex-col items-center justify-center text-center shrink-0">
+                            <span class="text-xl font-bold text-gold">Al-Malik</span>
+                            <span class="text-[10px] text-slate-400 mt-2">The Sovereign</span>
                         </div>
-                        <div onclick="toggleHabit(this)" class="habit-pill aurora-glass p-5 rounded-3xl flex flex-col gap-3 cursor-pointer">
-                            <span class="text-2xl">🌙</span>
-                            <span class="text-xs font-bold">Morning Athkar</span>
-                        </div>
+                    </div>
+                </div>
+
+                <!-- Habits grid -->
+                <div class="grid grid-cols-2 gap-3">
+                    <div onclick="toggleHabit(this)" class="habit-card aurora-glass p-5 rounded-3xl flex flex-col gap-3 cursor-pointer">
+                        <span class="text-2xl">🕌</span>
+                        <span class="text-[11px] font-bold">Mosque Prayer</span>
+                    </div>
+                    <div onclick="toggleHabit(this)" class="habit-card aurora-glass p-5 rounded-3xl flex flex-col gap-3 cursor-pointer">
+                        <span class="text-2xl">🤲</span>
+                        <span class="text-[11px] font-bold">Personal Dua</span>
                     </div>
                 </div>
             </section>
 
             <!-- CHAT VIEW -->
-            <section id="chat" class="tab-view space-y-6 min-h-full">
+            <section id="chat" class="tab-section space-y-6 min-h-full">
                 <div id="chat-messages" class="space-y-6 pt-4">
                     <div class="flex justify-start">
                         <div class="aurora-glass p-5 rounded-[1.8rem] rounded-bl-none max-w-[90%] text-sm leading-relaxed">
-                            Welcome, Seeker. How can I illuminate your path today with Quranic wisdom?
+                            Assalamu Alaikum. How can I illuminate your heart with knowledge today?
                         </div>
                     </div>
                 </div>
             </section>
 
             <!-- DHIKR VIEW -->
-            <section id="dhikr" class="tab-view h-full flex flex-col items-center justify-center">
-                <div class="text-center mb-10">
-                    <h2 id="dhikr-title" class="text-xs font-black tracking-[0.4em] text-emerald-400 uppercase">SubhanAllah</h2>
-                    <p id="dhikr-counter" class="text-8xl font-black text-white mt-4 tracking-tighter">0</p>
+            <section id="dhikr" class="tab-section h-full flex flex-col items-center justify-center">
+                <div class="text-center mb-8">
+                    <h2 id="dhikr-phrase" class="text-[11px] font-black tracking-[0.4em] text-emerald-400 uppercase">SubhanAllah</h2>
+                    <p id="main-counter" class="text-9xl font-black text-white mt-4 tracking-tighter">0</p>
                 </div>
                 
-                <div onclick="handleDhikr()" class="tasbih-core cursor-pointer relative">
-                    <div class="absolute inset-0 rounded-full border border-emerald-500/20 animate-pulse"></div>
-                    <div class="w-56 h-56 rounded-full bg-slate-900/50 border border-emerald-500/20 flex items-center justify-center">
+                <!-- THE TRIGGER -->
+                <div class="relative flex items-center justify-center">
+                    <div class="absolute w-72 h-72 border border-emerald-500/5 rounded-full animate-pulse"></div>
+                    <div onclick="handleTasbih()" class="tasbih-trigger">
                         <div class="w-48 h-48 rounded-full border border-emerald-500/10 flex items-center justify-center">
-                            <span class="text-[10px] font-black tracking-widest text-emerald-500">GLORY TO ALLAH</span>
+                            <div class="text-center">
+                                <span class="text-[10px] font-black tracking-widest text-emerald-500 block">DHIKR</span>
+                                <span class="text-[8px] text-slate-600 block mt-1 uppercase">Tap Anywhere</span>
+                            </div>
                         </div>
                     </div>
                 </div>
                 
-                <div class="mt-12 flex gap-8">
-                    <button onclick="resetDhikr()" class="text-[9px] font-bold uppercase tracking-widest text-slate-500">Reset</button>
-                    <div class="w-px h-4 bg-slate-800"></div>
-                    <button onclick="toggleDhikrAuto()" id="auto-btn" class="text-[9px] font-bold uppercase tracking-widest text-slate-500">Auto Mode: Off</button>
+                <div class="mt-12 flex gap-10">
+                    <button onclick="resetTasbih()" class="text-[10px] font-bold uppercase tracking-widest text-slate-600">Reset</button>
+                    <button id="auto-btn" onclick="toggleAuto()" class="text-[10px] font-bold uppercase tracking-widest text-slate-600">Auto: OFF</button>
                 </div>
             </section>
 
-            <!-- JOURNAL VIEW -->
-            <section id="journal" class="tab-view space-y-6">
-                <h2 class="text-2xl font-black italic">Reflections</h2>
+            <!-- TOOLS VIEW -->
+            <section id="tools" class="tab-section space-y-6">
+                <h2 class="text-2xl font-black">Divine Tools</h2>
+                
+                <!-- Zakat Tool -->
                 <div class="aurora-glass p-6 rounded-[2rem] space-y-4">
-                    <textarea id="journal-input" placeholder="What are you grateful for today?" class="w-full bg-transparent border-none outline-none text-sm min-h-[150px] resize-none"></textarea>
-                    <button onclick="saveJournal()" class="w-full bg-emerald-600/20 text-emerald-400 py-3 rounded-2xl font-bold text-xs uppercase tracking-widest border border-emerald-500/20">Record Reflection</button>
+                    <div class="flex items-center gap-3 mb-2">
+                        <span class="text-xl">💰</span>
+                        <span class="text-xs font-black uppercase tracking-widest">Zakat Simple Calc</span>
+                    </div>
+                    <input id="zakat-val" type="number" placeholder="Enter Total Savings" class="w-full bg-slate-900/50 border border-white/5 p-4 rounded-xl text-sm outline-none">
+                    <div id="zakat-result" class="text-emerald-400 font-bold text-center text-sm py-2"></div>
+                    <button onclick="calcZakat()" class="w-full bg-emerald-600/20 text-emerald-400 py-3 rounded-xl font-bold text-[10px] uppercase tracking-widest">Calculate (2.5%)</button>
                 </div>
-                <div id="journal-list" class="space-y-3 pb-20">
-                    <!-- Saved journals appear here -->
+
+                <!-- Journal -->
+                <div class="aurora-glass p-6 rounded-[2rem] space-y-4">
+                    <h3 class="text-xs font-black uppercase tracking-widest text-slate-500">Reflection Journal</h3>
+                    <textarea id="ref-input" class="w-full bg-transparent border-none outline-none text-sm min-h-[100px] resize-none" placeholder="What did you learn about Allah today?"></textarea>
+                    <button onclick="saveRef()" class="w-full bg-slate-100 text-slate-900 py-3 rounded-xl font-bold text-[10px] uppercase tracking-widest">Save Memory</button>
                 </div>
+
+                <div id="ref-list" class="space-y-3 pb-10"></div>
             </section>
 
         </main>
 
-        <!-- Floating Chat Input -->
-        <div id="chat-bar" class="hidden absolute bottom-28 left-6 right-6 z-50">
-            <div class="aurora-glass rounded-[2rem] p-2 flex items-center border-white/5 shadow-2xl">
-                <input id="ai-input" type="text" placeholder="Ask anything..." class="flex-1 bg-transparent px-5 py-4 text-sm outline-none">
-                <button onclick="sendAI()" class="w-12 h-12 bg-emerald-500 text-slate-950 rounded-full flex items-center justify-center shadow-lg active:scale-90 transition-all">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 5l7 7-7 7M5 5l7 7-7 7"></path></svg>
+        <!-- Chat Input Dock -->
+        <div id="chat-input-area" class="hidden absolute bottom-28 left-6 right-6 z-[100]">
+            <div class="aurora-glass rounded-[2rem] p-2 flex items-center border-white/10 shadow-2xl">
+                <input id="ai-query" type="text" placeholder="Inquire knowledge..." class="flex-1 bg-transparent px-5 py-4 text-sm outline-none">
+                <button onclick="talkToNoor()" class="w-12 h-12 bg-emerald-500 text-slate-950 rounded-[1.4rem] flex items-center justify-center active:scale-90 transition-all">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M13 5l7 7-7 7M5 5l7 7-7 7"></path></svg>
                 </button>
             </div>
         </div>
 
         <!-- Navigation Dock -->
-        <nav class="shrink-0 h-24 aurora-glass border-none rounded-t-[3rem] flex items-center justify-around px-8 pb-4 z-50">
-            <button onclick="switchTab('home')" class="nav-btn active-tab" id="btn-home">
+        <nav class="shrink-0 h-24 aurora-glass rounded-t-[3rem] flex items-center justify-around px-8 pb-4 z-[110]">
+            <button onclick="switchTab('home')" class="nav-btn transition-all relative active" id="btn-home">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
             </button>
-            <button onclick="switchTab('chat')" class="nav-btn text-slate-500" id="btn-chat">
+            <button onclick="switchTab('chat')" class="nav-btn transition-all relative text-slate-600" id="btn-chat">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path></svg>
             </button>
-            <button onclick="switchTab('dhikr')" class="nav-btn text-slate-500" id="btn-dhikr">
+            <button onclick="switchTab('dhikr')" class="nav-btn transition-all relative text-slate-600" id="btn-dhikr">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
             </button>
         </nav>
@@ -199,160 +203,135 @@
 
     <script>
         const apiKey = "AIzaSyB5spR0BCO12vGTbBCtFOC_PbKteK7fk7g";
-        let dhikrCount = parseInt(localStorage.getItem('noor_dhikr')) || 0;
-        let journals = JSON.parse(localStorage.getItem('noor_journals')) || [];
+        let count = parseInt(localStorage.getItem('noor_master_dhikr')) || 0;
+        let habits = parseInt(localStorage.getItem('noor_habits')) || 0;
+        let autoInterval = null;
 
-        // --- BACKGROUND STARS ---
+        // Background
         const canvas = document.getElementById('bg-canvas');
         const ctx = canvas.getContext('2d');
         let stars = [];
-
         function initStars() {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-            stars = [];
-            for(let i=0; i<150; i++) {
-                stars.push({
-                    x: Math.random() * canvas.width,
-                    y: Math.random() * canvas.height,
-                    size: Math.random() * 1.5,
-                    speed: Math.random() * 0.2
-                });
-            }
+            canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+            for(let i=0; i<100; i++) stars.push({x: Math.random()*canvas.width, y: Math.random()*canvas.height, s: Math.random()*1.5, sp: Math.random()*0.1});
+        }
+        function drawStars() {
+            ctx.clearRect(0,0,canvas.width, canvas.height); ctx.fillStyle="#fff";
+            stars.forEach(s => { ctx.beginPath(); ctx.arc(s.x, s.y, s.s, 0, Math.PI*2); ctx.fill(); s.y -= s.sp; if(s.y < 0) s.y = canvas.height; });
+            requestAnimationFrame(drawStars);
+        }
+        initStars(); drawStars();
+
+        // UI Initialization
+        document.getElementById('main-counter').innerText = count;
+        updateSoulProgress();
+        renderRefs();
+
+        function switchTab(id) {
+            document.querySelectorAll('.tab-section').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active', 'text-slate-600'));
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.add('text-slate-600'));
+
+            document.getElementById(id).classList.add('active');
+            const nav = document.getElementById('btn-' + (id === 'tools' ? 'home' : id));
+            if(nav) { nav.classList.add('active'); nav.classList.remove('text-slate-600'); }
+
+            document.getElementById('chat-input-area').classList.toggle('hidden', id !== 'chat');
         }
 
-        function animateStars() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.fillStyle = "#fff";
-            stars.forEach(s => {
-                ctx.beginPath();
-                ctx.arc(s.x, s.y, s.size, 0, Math.PI * 2);
-                ctx.fill();
-                s.y -= s.speed;
-                if(s.y < 0) s.y = canvas.height;
-            });
-            requestAnimationFrame(animateStars);
-        }
-
-        initStars();
-        animateStars();
-
-        // --- CORE LOGIC ---
-        function switchTab(tabId) {
-            document.querySelectorAll('.tab-view').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active-tab', 'text-slate-500'));
-            document.querySelectorAll('.nav-btn').forEach(b => b.classList.add('text-slate-500'));
-
-            document.getElementById(tabId).classList.add('active');
-            document.getElementById('btn-' + (tabId === 'journal' ? 'home' : tabId))?.classList.add('active-tab');
-            document.getElementById('btn-' + (tabId === 'journal' ? 'home' : tabId))?.classList.remove('text-slate-500');
-
-            document.getElementById('chat-bar').classList.toggle('hidden', tabId !== 'chat');
-            document.getElementById('app-view').scrollTop = 0;
-            
-            if(tabId === 'journal') renderJournals();
-        }
-
-        function handleDhikr() {
-            dhikrCount++;
+        function handleTasbih() {
+            count++;
+            if(navigator.vibrate) navigator.vibrate(25);
             updateDhikrUI();
-            if(navigator.vibrate) navigator.vibrate(20);
-            localStorage.setItem('noor_dhikr', dhikrCount);
         }
 
         function updateDhikrUI() {
-            const countEl = document.getElementById('dhikr-counter');
-            countEl.innerText = dhikrCount;
-            const phrases = ["SubhanAllah", "Alhamdulillah", "Allahu Akbar", "La ilaha illallah"];
-            const idx = Math.floor((dhikrCount % 132) / 33);
-            document.getElementById('dhikr-title').innerText = phrases[idx];
+            document.getElementById('main-counter').innerText = count;
+            localStorage.setItem('noor_master_dhikr', count);
             
-            if(dhikrCount % 33 === 0 && navigator.vibrate) {
-                navigator.vibrate([100, 50, 100]);
-            }
+            const p = ["SubhanAllah", "Alhamdulillah", "Allahu Akbar", "La ilaha illallah"];
+            const idx = Math.floor((count % 132) / 33);
+            document.getElementById('dhikr-phrase').innerText = p[idx];
+            
+            if(count % 33 === 0 && navigator.vibrate) navigator.vibrate([100, 50, 100]);
+            updateSoulProgress();
         }
-        updateDhikrUI();
 
-        function resetDhikr() {
-            dhikrCount = 0;
-            updateDhikrUI();
-            localStorage.setItem('noor_dhikr', 0);
+        function resetTasbih() { count = 0; updateDhikrUI(); }
+
+        function toggleAuto() {
+            if(autoInterval) {
+                clearInterval(autoInterval); autoInterval = null;
+                document.getElementById('auto-btn').innerText = "Auto: OFF";
+                document.getElementById('auto-btn').classList.remove('text-emerald-500');
+            } else {
+                autoInterval = setInterval(handleTasbih, 1000);
+                document.getElementById('auto-btn').innerText = "Auto: ON";
+                document.getElementById('auto-btn').classList.add('text-emerald-500');
+            }
         }
 
         function toggleHabit(el) {
-            el.classList.toggle('checked');
-            if(navigator.vibrate) navigator.vibrate(10);
+            el.classList.toggle('active');
+            habits = document.querySelectorAll('.habit-card.active').length;
+            updateSoulProgress();
         }
 
-        // --- JOURNAL SYSTEM ---
-        function saveJournal() {
-            const input = document.getElementById('journal-input');
+        function updateSoulProgress() {
+            const total = count + (habits * 50);
+            const level = Math.floor(total / 200) + 1;
+            const progress = (total % 200) / 2;
+            
+            document.getElementById('soul-rank').innerText = `Soul Level: ${level} (${level < 5 ? 'Seeker' : 'Devoted'})`;
+            document.getElementById('soul-progress').style.width = progress + '%';
+        }
+
+        function calcZakat() {
+            const val = document.getElementById('zakat-val').value;
+            if(!val) return;
+            document.getElementById('zakat-result').innerText = `Due: ${(val * 0.025).toFixed(2)}`;
+        }
+
+        function saveRef() {
+            const input = document.getElementById('ref-input');
             if(!input.value.trim()) return;
-            
-            const entry = {
-                id: Date.now(),
-                text: input.value,
-                date: new Date().toLocaleDateString()
-            };
-            
-            journals.unshift(entry);
-            localStorage.setItem('noor_journals', JSON.stringify(journals));
+            const refs = JSON.parse(localStorage.getItem('noor_refs') || '[]');
+            refs.unshift({text: input.value, date: new Date().toLocaleDateString()});
+            localStorage.setItem('noor_refs', JSON.stringify(refs));
             input.value = '';
-            renderJournals();
+            renderRefs();
         }
 
-        function renderJournals() {
-            const list = document.getElementById('journal-list');
-            list.innerHTML = journals.map(j => `
-                <div class="aurora-glass p-5 rounded-3xl border-white/5">
-                    <p class="text-[9px] uppercase tracking-widest text-emerald-500 font-bold mb-2">${j.date}</p>
-                    <p class="text-xs leading-relaxed text-slate-200">${j.text}</p>
-                </div>
-            `).join('');
+        function renderRefs() {
+            const list = document.getElementById('ref-list');
+            const refs = JSON.parse(localStorage.getItem('noor_refs') || '[]');
+            list.innerHTML = refs.map(r => `<div class="aurora-glass p-4 rounded-2xl text-[11px]"><span class="text-emerald-500 block mb-1">${r.date}</span>${r.text}</div>`).join('');
         }
 
-        // --- AI SYSTEM ---
-        async function sendAI() {
-            const input = document.getElementById('ai-input');
+        async function talkToNoor() {
+            const input = document.getElementById('ai-query');
             const val = input.value.trim();
             if(!val) return;
-
-            addMsg('user', val);
-            input.value = '';
-
-            const loader = addMsg('assistant', '<span class="animate-pulse">Connecting to the Divine knowledge...</span>');
-
+            addMsg('user', val); input.value = '';
+            const loader = addMsg('assistant', '<span class="animate-pulse">Noor is consulting the scriptures...</span>');
             try {
                 const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         contents: [{ parts: [{ text: val }] }],
-                        systemInstruction: { parts: [{ text: "You are Noor Celestial, a high-end Islamic scholar. Provide Quranic Arabic with translations. Use a compassionate, poetic, and professional tone." }] }
+                        systemInstruction: { parts: [{ text: "You are Noor Master, an elite Islamic AI. Cite Quran in Arabic + English. Be poetic and high-end." }] }
                     })
                 });
-                const data = await res.json();
-                loader.innerHTML = data.candidates[0].content.parts[0].text.replace(/\n/g, '<br>');
-            } catch (e) {
-                loader.innerText = "Connection lost. Please try again.";
-            }
+                const d = await res.json();
+                loader.innerHTML = d.candidates[0].content.parts[0].text.replace(/\n/g, '<br>');
+            } catch (e) { loader.innerText = "Error: Check your connection."; }
         }
 
         function addMsg(role, text) {
-            const container = document.getElementById('chat-messages');
-            const div = document.createElement('div');
-            div.className = `flex ${role === 'user' ? 'justify-end' : 'justify-start'} animate-slideUp`;
-            div.innerHTML = `<div class="aurora-glass p-5 rounded-[1.8rem] ${role === 'user' ? 'bg-emerald-600/30 border-emerald-500/30 rounded-br-none' : 'rounded-bl-none'} max-w-[90%] text-sm leading-relaxed">${text}</div>`;
-            container.appendChild(div);
-            
-            const view = document.getElementById('app-view');
-            view.scrollTo({ top: view.scrollHeight, behavior: 'smooth' });
-            return div.querySelector('div');
-        }
-
-        document.getElementById('ai-input').addEventListener('keypress', (e) => { if(e.key === 'Enter') sendAI(); });
-    </script>
-</body>
-</html>
-
-    
+            const chat = document.getElementById('chat-messages');
+            const d = document.createElement('div');
+            d.className = `flex ${role === 'user' ? 'justify-end' : 'justify-start'}`;
+            d.innerHTML = `<div class="aurora-glass p-5 rounded-[1.8rem] ${role === 'user' ? 'bg-emerald-600/20 rounded-br-none' : 'rounded-bl-none'} max-w-[90%] text-sm">${text}</div>`;
+            chat.appendChild(d);
+            document.getElementById('v
